@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="./style.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Gamja+Flower&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <header class="wrap">
+      <h1 class="title">나만의 서랍장🔒</h1>
+      <p class="subtxt">
+        중요한 링크를 저장해두고 꺼내 볼 수 있는 소중한 서랍장입니다.
+      </p>
+    </header>
+    <main>
+      <section>
+        <input placeholder="link를 첨부해주세요." type="text" id="linktxt" />
+        <div class="toolbar">
+          <button class="fontbold">Bold</button>
+          <button class="fontred">text-red</button>
+        </div>
+        <textarea
+          placeholder="코멘트를 입력해주세요."
+          id="comment"
+          cols="30"
+          rows="5"
+        ></textarea>
+        <button class="save" onclick="saveNote()">서랍장에 보관</button>
+      </section>
+      <section id="display">
+        <ul></ul>
+      </section>
+    </main>
+    <script>
+      let allMemo = JSON.parse(localStorage.getItem("allMemo"));
+      allMemo = allMemo ?? [];
+      render();
+
+      let isBold = false;
+      let isRed = false;
+
+      function saveNote() {
+        const link = document.querySelector("#linktxt").value;
+        const comment = document.querySelector("#comment").value;
+
+        // 중복된 링크인 경우 경고창 표시
+        const isDuplicate = allMemo.some((item) => item.link === link);
+        if (isDuplicate) {
+          alert("이미 존재하는 링크입니다!");
+          return;
+        }
+
+        if (link.startsWith("https") && comment !== "") {
+          const saveDate = new Date().toLocaleString();
+          allMemo.push({
+            link,
+            comment,
+            saveDate,
+            len: allMemo.length,
+            isBold,
+            isRed,
+          });
+
+          localStorage.setItem("allMemo", JSON.stringify(allMemo));
+          render();
+
+          document.querySelector("#linktxt").value = "";
+          document.querySelector("#comment").value = "";
+          document
+            .querySelector("#comment")
+            .classList.remove("font-weight-bold");
+          document.querySelector("#comment").classList.remove("font-color-red");
+          isBold = false; // isBold 초기화
+          isRed = false; // isRed 초기화
+        } else {
+          alert("link와 comment를 입력해주세요!");
+        }
+      }
+
+      function render() {
+        const display = document.querySelector("#display ul");
+        display.innerHTML = "";
+
+        for (const item of allMemo) {
+          const saveLink = document.createElement("a"); // a 태그
+          const saveComment = document.createElement("p");
+          const saveId = document.createElement("h3");
+          const deleteMemoBtn = document.createElement("button");
+          const saveDate = document.createElement("p"); // saveDate 변수 선언
+
+          saveLink.textContent = item.link;
+          saveLink.href = item.link; // 링크
+          saveLink.target = "_blank";
+          saveComment.textContent = item.comment;
+          saveId.textContent = `< ${item.len + 1}번째 - 서랍장 >`;
+          saveDate.innerHTML = item.saveDate; // 저장한 날짜를 표시
+
+          deleteMemoBtn.textContent = "서랍장 삭제";
+          deleteMemoBtn.setAttribute("id", item.len);
+          deleteMemoBtn.setAttribute("onclick", "remove()");
+
+          const li = document.createElement("li");
+
+          // bold와 red에 대한 스타일 적용
+          saveComment.style.fontWeight = item.isBold ? "bold" : "normal";
+          saveComment.style.color = item.isRed ? "red" : "black";
+
+          
+          li.appendChild(saveId);
+          li.appendChild(saveLink);
+          li.appendChild(saveComment);
+          li.appendChild(saveDate); // saveDate 추가
+          li.appendChild(deleteMemoBtn);
+
+          display.appendChild(li);
+        }
+      }
+
+      const btnbold = document.querySelector(".fontbold");
+      btnbold.addEventListener("click", function (e) {
+        const comment = document.querySelector("#comment");
+        comment.classList.toggle("font-weight-bold");
+        isBold = !isBold;
+      });
+
+      const btnred = document.querySelector(".fontred");
+      btnred.addEventListener("click", function (e) {
+        const comment = document.querySelector("#comment");
+        comment.classList.toggle("font-color-red");
+        isRed = !isRed;
+      });
+
+      // 삭제 코드
+      function remove() {
+        const idx = allMemo.find((item) => item.len == event.srcElement.id);
+        if (idx) {
+          allMemo.splice(
+            allMemo.findIndex((item) => item.len == idx.len),
+            1
+          );
+          // 삭제된 요소 이후의 모든 요소의 len 값 감소
+          for (let i = idx.len; i < allMemo.length; i++) {
+            allMemo[i].len--;
+          }
+        }
+        localStorage.setItem("allMemo", JSON.stringify(allMemo));
+        render();
+      }
+    </script>
+  </body>
+</html>
